@@ -5,7 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 
-namespace SamplesApp.Logger
+namespace Uno.Extensions.Logging.WebAssembly
 {
 	/// <summary>
 	/// A provider of <see cref="WebAssemblyConsoleLogger"/> instances.

@@ -30,6 +30,11 @@ steps:
       configFilePath: GitVersion.yml
     displayName: Use GitVersion
 
+  - task: MSBuild@1
+    inputs:
+      solution: src/Uno.Extensions.Logging.sln
+      msbuildArguments: /r /p:Configuration=Release "/p:PackageOutputPath=$(build.artifactstagingdirectory)\nuget" "/p:PackageVersion=%GITVERSION_FullSemVer%" "/p:InformationalVersion=%GITVERSION_InformationalVersion%"  /detailedsummary
+
   - task: PowerShell@2
     displayName: Authenticode Sign Packages
     inputs:

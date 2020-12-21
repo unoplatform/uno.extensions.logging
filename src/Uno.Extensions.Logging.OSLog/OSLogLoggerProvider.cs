@@ -1,32 +1,31 @@
-﻿#if __IOS__ || __MACOS__
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 
-namespace SamplesApp.Logger
+namespace Uno.Extensions.Logging
 {
 	/// <summary>
 	/// A provider of <see cref="WebAssemblyConsoleLogger{T}"/> instances.
 	/// </summary>
-	internal class OSLogLoggerProvider : ILoggerProvider
+	public class OSLogLoggerProvider : ILoggerProvider
 	{
-		private readonly ConcurrentDictionary<string, OSLogLoggerProvider<object>> _loggers;
+		private readonly ConcurrentDictionary<string, OSLogLogger> _loggers;
 
 		/// <summary>
 		/// Creates an instance of <see cref="WebAssemblyConsoleLoggerProvider"/>.
 		/// </summary>
 		public OSLogLoggerProvider()
 		{
-			_loggers = new ConcurrentDictionary<string, OSLogLoggerProvider<object>>();
+			_loggers = new ConcurrentDictionary<string, OSLogLogger>();
 		}
 
 		/// <inheritdoc />
 		public ILogger CreateLogger(string name)
 		{
-			return _loggers.GetOrAdd(name, loggerName => new OSLogLoggerProvider<object>(name));
+			return _loggers.GetOrAdd(name, loggerName => new OSLogLogger(name));
 		}
 
 		/// <inheritdoc />
@@ -35,4 +34,3 @@ namespace SamplesApp.Logger
 		}
 	}
 }
-#endif

@@ -8,7 +8,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Uno.Foundation;
 
-namespace SamplesApp.Logger
+namespace Uno.Extensions.Logging.WebAssembly
 {
 	internal class WebAssemblyConsoleLogger : ILogger<object>, ILogger
 	{

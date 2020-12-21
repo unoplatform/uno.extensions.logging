@@ -4,9 +4,9 @@ using System.Text;
 using CoreFoundation;
 using Microsoft.Extensions.Logging;
 
-namespace SamplesApp.Logger
+namespace Uno.Extensions.Logging
 {
-	internal class OSLogLoggerProvider<T> : ILogger<T>, ILogger
+	internal class OSLogLogger : ILogger<object>, ILogger
 	{
 		private static readonly string _loglevelPadding = ": ";
 		private static readonly string _messagePadding;
@@ -15,19 +15,19 @@ namespace SamplesApp.Logger
 
 		private readonly string _name;
 
-		static OSLogLoggerProvider()
+		static OSLogLogger()
 		{
 			var logLevelString = GetLogLevelString(LogLevel.Information);
 			_messagePadding = new string(' ', logLevelString.Length + _loglevelPadding.Length);
 			_newLineWithMessagePadding = Environment.NewLine + _messagePadding;
 		}
 
-		public OSLogLoggerProvider()
+		public OSLogLogger()
 			: this(string.Empty)
 		{
 		}
 
-		public OSLogLoggerProvider(string name)
+		public OSLogLogger(string name)
 		{
 			_name = name ?? throw new ArgumentNullException(nameof(name));
 		}

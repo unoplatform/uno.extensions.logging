@@ -98,7 +98,7 @@ namespace Uno.Extensions.Logging
 			logBuilder.Append(logName);
 			logBuilder.Append("[");
 			logBuilder.Append(eventId);
-			logBuilder.Append("]");
+			logBuilder.Append("] ");
 
 			if (!string.IsNullOrEmpty(message))
 			{

@@ -1,0 +1,18 @@
+version: 2
+updates:
+- package-ecosystem: nuget
+  directory: "/"
+  schedule:
+    interval: weekly
+    time: "01:00"
+  open-pull-requests-limit: 10
+  labels:
+  - kind/dependency
+  - do-not-merge/work-in-progress
+  ignore:
+  - dependency-name: Uno.Foundation.Runtime.WebAssembly
+    versions:
+    - ">= 3.5.a, < 3.6"
+  - dependency-name: Uno.Foundation.Runtime.WebAssembly
+    versions:
+    - 3.4.0

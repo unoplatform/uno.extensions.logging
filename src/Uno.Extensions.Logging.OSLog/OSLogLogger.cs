@@ -84,6 +84,10 @@ namespace Uno.Extensions.Logging
 
 					OSLog.Default.Log(osLogLevel, formattedMessage);
 				}
+				catch (Exception ex)
+				{
+					Console.Error.WriteLine($"Failed to log \"{message}\": {ex}");
+				}
 				finally
 				{
 					_logBuilder.Clear();

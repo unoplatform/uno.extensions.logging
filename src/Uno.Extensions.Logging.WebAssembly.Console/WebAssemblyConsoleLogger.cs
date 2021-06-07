@@ -108,6 +108,10 @@ namespace Uno.Extensions.Logging.WebAssembly
 							break;
 					}
 				}
+				catch(Exception ex)
+				{
+					Console.Error.WriteLine($"Failed to log \"{message}\": {ex}");
+				}
 				finally
 				{
 					_logBuilder.Clear();

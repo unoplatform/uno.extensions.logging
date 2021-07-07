@@ -15,6 +15,13 @@ pr:
       - release/beta/*
       - release/stable/*
 
+variables:
+  # net6 preview install related
+  DotNetVersion: 6.0.100-preview.4.21255.9
+  MauiCheck.Version: 0.4.2
+  DotNet.Cli.Telemetry.OptOut: true
+  MauiCheck.Manifest: https://raw.githubusercontent.com/Redth/dotnet-maui-check/main/manifests/maui-dev.manifest.json
+
 steps:
   - checkout: self
     clean: "true"
@@ -30,10 +37,25 @@ steps:
       configFilePath: GitVersion.yml
     displayName: Use GitVersion
 
-  - task: MSBuild@1
-    inputs:
-      solution: src/Uno.Extensions.Logging.sln
-      msbuildArguments: /r /p:Configuration=Release "/p:PackageOutputPath=$(build.artifactstagingdirectory)\nuget" "/p:PackageVersion=%GITVERSION_FullSemVer%" "/p:InformationalVersion=%GITVERSION_InformationalVersion%"  /detailedsummary
+    ## Required until .NET 6 installs properly on Windows using UseDotnet
+  - powershell: |
+      $ProgressPreference = 'SilentlyContinue'
+      Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile dotnet-install.ps1
+      & .\dotnet-install.ps1 -Version $(DotNetVersion) -InstallDir "$env:ProgramFiles\dotnet\" -Verbose
+      & dotnet --list-sdks
+    displayName: install .NET $(DotNetVersion)
+    errorActionPreference: stop
+
+  - powershell: |
+      & dotnet tool update --global redth.net.maui.check --version $(MauiCheck.Version) --add-source https://api.nuget.org/v3/index.json
+      & maui-check --ci --non-interactive --fix --skip androidsdk --skip xcode --skip vswin --skip vsmac --manifest $(MauiCheck.Manifest)
+    displayName: Install .NET 6 Workloads
+    errorActionPreference: stop
+
+  - pwsh: |
+      cd $(build.sourcesdirectory)/src
+      dotnet msbuild Uno.Extensions.Logging.sln /r /p:Configuration=Release "/p:PackageOutputPath=$(build.artifactstagingdirectory)\nuget" "/p:PackageVersion=$(GITVERSION.FullSemVer)" "/p:InformationalVersion=$(GITVERSION.InformationalVersion)"  /detailedsummary
+    displayName: Build NetCore-Wasm Sample
 
   - task: PowerShell@2
     displayName: Authenticode Sign Packages

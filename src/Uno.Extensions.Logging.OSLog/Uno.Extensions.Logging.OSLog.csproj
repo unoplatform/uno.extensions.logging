@@ -1,7 +1,7 @@
-﻿<Project Sdk="MSBuild.Sdk.Extras">
+﻿<Project Sdk="Xamarin.Legacy.Sdk/0.1.0-alpha2">
 
   <PropertyGroup>
-    <TargetFramework>xamarinios10</TargetFramework>
+    <TargetFrameworks>xamarin.ios10;net6.0-ios;net6.0-maccatalyst</TargetFrameworks>
 		<LangVersion>9.0</LangVersion>
 		<Nullable>enable</Nullable>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>

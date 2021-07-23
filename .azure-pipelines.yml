@@ -17,10 +17,10 @@ pr:
 
 variables:
   # net6 preview install related
-  DotNetVersion: 6.0.100-preview.4.21255.9
-  MauiCheck.Version: 0.4.2
+  DotNetVersion: 6.0.100-preview.6.21355.2
+  MauiCheck.Version: 0.6.1
   DotNet.Cli.Telemetry.OptOut: true
-  MauiCheck.Manifest: https://raw.githubusercontent.com/Redth/dotnet-maui-check/main/manifests/maui-dev.manifest.json
+  MauiCheck.Manifest: https://raw.githubusercontent.com/Redth/dotnet-maui-check/main/manifests/maui-preview.manifest.json
 
 steps:
   - checkout: self

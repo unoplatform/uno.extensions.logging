@@ -17,10 +17,10 @@ pr:
 
 variables:
   # net6 preview install related
-  DotNetVersion: 6.0.100-preview.4.21255.9
-  MauiCheck.Version: 0.4.2
+  DotNetVersion: 6.0.100-preview.6.21355.2
+  MauiCheck.Version: '0.6.1'
   DotNet.Cli.Telemetry.OptOut: true
-  MauiCheck.Manifest: https://raw.githubusercontent.com/Redth/dotnet-maui-check/main/manifests/maui-dev.manifest.json
+  MauiCheck.Manifest: https://raw.githubusercontent.com/Redth/dotnet-maui-check/556b43a8b9df5ea1e65eb6b9b3ea8854a91fceed/manifests/maui-preview.manifest.json
 
 steps:
   - checkout: self
@@ -50,8 +50,9 @@ steps:
       & dotnet tool update --global redth.net.maui.check --version $(MauiCheck.Version) --add-source https://api.nuget.org/v3/index.json
       & maui-check --ci --non-interactive --fix --skip androidsdk --skip xcode --skip vswin --skip vsmac --manifest $(MauiCheck.Manifest)
     displayName: Install .NET 6 Workloads
-    errorActionPreference: stop
-
+    errorActionPreference: continue
+    ignoreLASTEXITCODE: true
+    
   - pwsh: |
       cd $(build.sourcesdirectory)/src
       dotnet msbuild Uno.Extensions.Logging.sln /r /p:Configuration=Release "/p:PackageOutputPath=$(build.artifactstagingdirectory)\nuget" "/p:PackageVersion=$(GITVERSION.FullSemVer)" "/p:InformationalVersion=$(GITVERSION.InformationalVersion)"  /detailedsummary

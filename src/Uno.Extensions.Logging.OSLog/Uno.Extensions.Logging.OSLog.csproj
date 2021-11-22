@@ -1,4 +1,4 @@
-﻿<Project Sdk="Xamarin.Legacy.Sdk/0.1.0-alpha2">
+﻿<Project Sdk="Xamarin.Legacy.Sdk/0.1.0-alpha4">
 
   <PropertyGroup>
     <TargetFrameworks>xamarin.ios10;net6.0-ios;net6.0-maccatalyst</TargetFrameworks>

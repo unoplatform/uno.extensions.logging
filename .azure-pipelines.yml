@@ -1,5 +1,5 @@
 pool:
-  vmImage: 'windows-2019'
+  vmImage: 'windows-2022'
 
 trigger:
   branches:
@@ -17,10 +17,10 @@ pr:
 
 variables:
   # net6 preview install related
-  DotNetVersion: 6.0.100-preview.6.21355.2
-  MauiCheck.Version: '0.6.1'
+  DotNetVersion: 6.0.300-preview.22154.4
+  UnoCheck.Version: '1.1.0-dev.22'
   DotNet.Cli.Telemetry.OptOut: true
-  MauiCheck.Manifest: https://raw.githubusercontent.com/Redth/dotnet-maui-check/556b43a8b9df5ea1e65eb6b9b3ea8854a91fceed/manifests/maui-preview.manifest.json
+  UnoCheck.Manifest: https://raw.githubusercontent.com/unoplatform/uno.check/d14571a546b55f58e51e392c04cf098168d6fe2d/manifests/uno.ui-preview.manifest.json
 
 steps:
   - checkout: self
@@ -47,16 +47,25 @@ steps:
     errorActionPreference: stop
 
   - powershell: |
-      & dotnet tool update --global redth.net.maui.check --version $(MauiCheck.Version) --add-source https://api.nuget.org/v3/index.json
-      & maui-check --ci --non-interactive --fix --skip androidsdk --skip xcode --skip vswin --skip vsmac --manifest $(MauiCheck.Manifest)
+      & dotnet tool update --global uno.check --version $(UnoCheck.Version) --add-source https://api.nuget.org/v3/index.json
+      & uno-check --ci --non-interactive --fix --skip androidsdk --skip androidemulator --skip xcode --skip vswin --skip vsmac --manifest $(UnoCheck.Manifest)
     displayName: Install .NET 6 Workloads
     errorActionPreference: continue
     ignoreLASTEXITCODE: true
-    
-  - pwsh: |
-      cd $(build.sourcesdirectory)/src
-      dotnet msbuild Uno.Extensions.Logging.sln /r /p:Configuration=Release "/p:PackageOutputPath=$(build.artifactstagingdirectory)\nuget" "/p:PackageVersion=$(GITVERSION.FullSemVer)" "/p:InformationalVersion=$(GITVERSION.InformationalVersion)"  /detailedsummary
-    displayName: Build NetCore-Wasm Sample
+
+  - task: MSBuild@1
+    displayName: Build Package
+    inputs:
+      solution: $(build.sourcesdirectory)/src/Uno.Extensions.Logging.sln
+      msbuildLocationMethod: version
+      msbuildVersion: latest
+      msbuildArchitecture: x86
+      msbuildArguments: /r /p:Configuration=Release /bl:$(build.artifactstagingdirectory)\msbuild.binlog "/p:PackageOutputPath=$(build.artifactstagingdirectory)\nuget" "/p:PackageVersion=$(GITVERSION.FullSemVer)" "/p:InformationalVersion=$(GITVERSION.InformationalVersion)"  /detailedsummary
+      clean: false
+      maximumCpuCount: true
+      restoreNugetPackages: false
+      logProjectEvents: false
+      createLogFile: false
 
   - task: PowerShell@2
     displayName: Authenticode Sign Packages
@@ -71,5 +80,6 @@ steps:
     condition: and(succeeded(), not(eq(variables['build.reason'], 'PullRequest')), not(eq(variables['SignClientSecret'], '')), not(eq(variables['SignClientUser'], '')))
 
   - task: PublishBuildArtifacts@1
+    condition: always()
     inputs:
       ArtifactName: $(Build.DefinitionName)

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Text;
-using CoreFoundation;
 using Microsoft.Extensions.Logging;
 
 namespace Uno.Extensions.Logging
@@ -73,16 +72,16 @@ namespace Uno.Extensions.Logging
 
 					var osLogLevel = logLevel switch
 					{
-						LogLevel.Critical => OSLogLevel.Fault,
-						LogLevel.Error => OSLogLevel.Info,
-						LogLevel.Warning => OSLogLevel.Info,
-						LogLevel.Information => OSLogLevel.Default,
-						LogLevel.Debug => OSLogLevel.Debug,
-						LogLevel.Trace => OSLogLevel.Debug,
-						_ => OSLogLevel.Default,
+						LogLevel.Critical => CoreFoundation.OSLogLevel.Fault,
+						LogLevel.Error => CoreFoundation.OSLogLevel.Info,
+						LogLevel.Warning => CoreFoundation.OSLogLevel.Info,
+						LogLevel.Information => CoreFoundation.OSLogLevel.Default,
+						LogLevel.Debug => CoreFoundation.OSLogLevel.Debug,
+						LogLevel.Trace => CoreFoundation.OSLogLevel.Debug,
+						_ => CoreFoundation.OSLogLevel.Default,
 					};
 
-					OSLog.Default.Log(osLogLevel, formattedMessage);
+					CoreFoundation.OSLog.Default.Log(osLogLevel, formattedMessage);
 				}
 				catch (Exception ex)
 				{

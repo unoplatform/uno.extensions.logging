@@ -9,6 +9,9 @@
 
     	<SupportedOSPlatformVersion Condition="'$(TargetFramework)'=='net6.0-ios'">10.0</SupportedOSPlatformVersion>
     	<SupportedOSPlatformVersion Condition="'$(TargetFramework)'=='net6.0-maccatalyst'">13.1</SupportedOSPlatformVersion>
+
+		<TargetPlatformVersion Condition="'$(TargetFramework)'=='net6.0-ios'">10.0</TargetPlatformVersion>
+		<TargetPlatformVersion Condition="'$(TargetFramework)'=='net6.0-maccatalyst'">13.1</TargetPlatformVersion>
 	</PropertyGroup>
 
 	<ItemGroup>

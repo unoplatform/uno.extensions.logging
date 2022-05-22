@@ -21,7 +21,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="..\..\build\_._" PackagePath="lib\net6.0-macos12.3" Pack="true" Visible="False" />
+		<Content Include="..\..\build\_._" PackagePath="lib\net6.0-macos10.14" Pack="true" Visible="False" />
 		<Content Include="..\..\build\_._" PackagePath="lib\net6.0-android31.0" Pack="true" Visible="False" />
 	</ItemGroup>
 </Project>

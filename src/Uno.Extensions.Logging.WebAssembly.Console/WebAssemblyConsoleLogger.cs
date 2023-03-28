@@ -8,174 +8,222 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Uno.Foundation;
 
+#if NET7_0_OR_GREATER
+using System.Runtime.InteropServices.JavaScript;
+#endif
+
 namespace Uno.Extensions.Logging.WebAssembly
 {
-	internal class WebAssemblyConsoleLogger : ILogger<object>, ILogger
-	{
-		private static readonly string _loglevelPadding = ": ";
-		private static readonly string _messagePadding;
-		private static readonly string _newLineWithMessagePadding;
-		private static readonly StringBuilder _logBuilder = new();
+    internal partial class WebAssemblyConsoleLogger : ILogger<object>, ILogger
+    {
+        private static readonly string _loglevelPadding = ": ";
+        private static readonly string _messagePadding;
+        private static readonly string _newLineWithMessagePadding;
+        private static readonly StringBuilder _logBuilder = new();
 
-		private readonly string _name;
+        private readonly string _name;
 
-		static WebAssemblyConsoleLogger()
-		{
-			var logLevelString = GetLogLevelString(LogLevel.Information);
-			_messagePadding = new string(' ', logLevelString.Length + _loglevelPadding.Length);
-			_newLineWithMessagePadding = Environment.NewLine + _messagePadding;
-		}
+        static WebAssemblyConsoleLogger()
+        {
+            var logLevelString = GetLogLevelString(LogLevel.Information);
+            _messagePadding = new string(' ', logLevelString.Length + _loglevelPadding.Length);
+            _newLineWithMessagePadding = Environment.NewLine + _messagePadding;
+        }
 
-		public WebAssemblyConsoleLogger()
-			: this(string.Empty)
-		{
-		}
+        public WebAssemblyConsoleLogger()
+            : this(string.Empty)
+        {
+        }
 
-		public WebAssemblyConsoleLogger(string name)
-		{
-			_name = name ?? throw new ArgumentNullException(nameof(name));
-		}
+        public WebAssemblyConsoleLogger(string name)
+        {
+            _name = name ?? throw new ArgumentNullException(nameof(name));
+        }
 
-		public IDisposable BeginScope<TState>(TState state)
-		{
-			return NoOpDisposable.Instance;
-		}
+        public IDisposable BeginScope<TState>(TState state)
+        {
+            return NoOpDisposable.Instance;
+        }
 
-		public bool IsEnabled(LogLevel logLevel)
-		{
-			return logLevel != LogLevel.None;
-		}
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            return logLevel != LogLevel.None;
+        }
 
-		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
-		{
-			if (!IsEnabled(logLevel))
-			{
-				return;
-			}
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        {
+            if (!IsEnabled(logLevel))
+            {
+                return;
+            }
 
-			if (formatter == null)
-			{
-				throw new ArgumentNullException(nameof(formatter));
-			}
+            if (formatter == null)
+            {
+                throw new ArgumentNullException(nameof(formatter));
+            }
 
-			var message = formatter(state, exception);
+            var message = formatter(state, exception);
 
-			if (!string.IsNullOrEmpty(message) || exception != null)
-			{
-				WriteMessage(logLevel, _name, eventId.Id, message, exception);
-			}
-		}
+            if (!string.IsNullOrEmpty(message) || exception != null)
+            {
+                WriteMessage(logLevel, _name, eventId.Id, message, exception);
+            }
+        }
 
-		private void WriteMessage(LogLevel logLevel, string logName, int eventId, string message, Exception exception)
-		{
-			lock (_logBuilder)
-			{
-				try
-				{
-					CreateDefaultLogMessage(_logBuilder, logLevel, logName, eventId, message, exception);
-					var formattedMessage = _logBuilder.ToString();
+        private void WriteMessage(LogLevel logLevel, string logName, int eventId, string message, Exception exception)
+        {
+            lock (_logBuilder)
+            {
+                try
+                {
+                    CreateDefaultLogMessage(_logBuilder, logLevel, logName, eventId, message, exception);
+                    var formattedMessage = _logBuilder.ToString();
 
-					void Invoke(string method, string message) => WebAssemblyRuntime.InvokeJS($"{method}(\"{WebAssemblyRuntime.EscapeJs(message)}\")");
+                    switch (logLevel)
+                    {
+                        case LogLevel.Trace:
+                        case LogLevel.Debug:
+                            // Although https://console.spec.whatwg.org/#loglevel-severity claims that
+                            // "console.debug" and "console.log" are synonyms, that doesn't match the
+                            // behavior of browsers in the real world. Chromium only displays "debug"
+                            // messages if you enable "Verbose" in the filter dropdown (which is off
+                            // by default). As such "console.debug" is the best choice for messages
+                            // with a lower severity level than "Information".
+                            NativeMethods.LogDebug(formattedMessage);
+                            break;
+                        case LogLevel.Information:
+                            NativeMethods.LogInfo(formattedMessage);
+                            break;
+                        case LogLevel.Warning:
+                            NativeMethods.LogWarning(formattedMessage);
+                            break;
+                        case LogLevel.Error:
+                            NativeMethods.LogError(formattedMessage);
+                            break;
+                        case LogLevel.Critical:
+                            // Writing to Console.Error is even more severe than calling console.error,
+                            // because it also causes the error UI (gold bar) to appear.
+                            Console.Error.WriteLine(formattedMessage);
+                            break;
+                        default: // LogLevel.None or invalid enum values
+                            Console.WriteLine(formattedMessage);
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Failed to log \"{message}\": {ex}");
+                }
+                finally
+                {
+                    _logBuilder.Clear();
+                }
+            }
+        }
 
-					switch (logLevel)
-					{
-						case LogLevel.Trace:
-						case LogLevel.Debug:
-							// Although https://console.spec.whatwg.org/#loglevel-severity claims that
-							// "console.debug" and "console.log" are synonyms, that doesn't match the
-							// behavior of browsers in the real world. Chromium only displays "debug"
-							// messages if you enable "Verbose" in the filter dropdown (which is off
-							// by default). As such "console.debug" is the best choice for messages
-							// with a lower severity level than "Information".
-							Invoke("console.debug", formattedMessage);
-							break;
-						case LogLevel.Information:
-							Invoke("console.info", formattedMessage);
-							break;
-						case LogLevel.Warning:
-							Invoke("console.warn", formattedMessage);
-							break;
-						case LogLevel.Error:
-							Invoke("console.error", formattedMessage);
-							break;
-						case LogLevel.Critical:
-							// Writing to Console.Error is even more severe than calling console.error,
-							// because it also causes the error UI (gold bar) to appear.
-							Console.Error.WriteLine(formattedMessage);
-							break;
-						default: // LogLevel.None or invalid enum values
-							Console.WriteLine(formattedMessage);
-							break;
-					}
-				}
-				catch(Exception ex)
-				{
-					Console.Error.WriteLine($"Failed to log \"{message}\": {ex}");
-				}
-				finally
-				{
-					_logBuilder.Clear();
-				}
-			}
-		}
+        private void CreateDefaultLogMessage(StringBuilder logBuilder, LogLevel logLevel, string logName, int eventId, string message, Exception exception)
+        {
+            logBuilder.Append(GetLogLevelString(logLevel));
+            logBuilder.Append(_loglevelPadding);
+            logBuilder.Append(logName);
+            logBuilder.Append("[");
+            logBuilder.Append(eventId);
+            logBuilder.Append("]");
 
-		private void CreateDefaultLogMessage(StringBuilder logBuilder, LogLevel logLevel, string logName, int eventId, string message, Exception exception)
-		{
-			logBuilder.Append(GetLogLevelString(logLevel));
-			logBuilder.Append(_loglevelPadding);
-			logBuilder.Append(logName);
-			logBuilder.Append("[");
-			logBuilder.Append(eventId);
-			logBuilder.Append("]");
+            if (!string.IsNullOrEmpty(message))
+            {
+                // message
+                logBuilder.AppendLine();
+                logBuilder.Append(_messagePadding);
 
-			if (!string.IsNullOrEmpty(message))
-			{
-				// message
-				logBuilder.AppendLine();
-				logBuilder.Append(_messagePadding);
+                var len = logBuilder.Length;
+                logBuilder.Append(message);
+                logBuilder.Replace(Environment.NewLine, _newLineWithMessagePadding, len, message.Length);
+            }
 
-				var len = logBuilder.Length;
-				logBuilder.Append(message);
-				logBuilder.Replace(Environment.NewLine, _newLineWithMessagePadding, len, message.Length);
-			}
+            // Example:
+            // System.InvalidOperationException
+            //    at Namespace.Class.Function() in File:line X
+            if (exception != null)
+            {
+                // exception message
+                logBuilder.AppendLine();
+                logBuilder.Append(exception.ToString());
+            }
+        }
 
-			// Example:
-			// System.InvalidOperationException
-			//    at Namespace.Class.Function() in File:line X
-			if (exception != null)
-			{
-				// exception message
-				logBuilder.AppendLine();
-				logBuilder.Append(exception.ToString());
-			}
-		}
+        private static string GetLogLevelString(LogLevel logLevel)
+        {
+            switch (logLevel)
+            {
+                case LogLevel.Trace:
+                    return "trce";
+                case LogLevel.Debug:
+                    return "dbug";
+                case LogLevel.Information:
+                    return "info";
+                case LogLevel.Warning:
+                    return "warn";
+                case LogLevel.Error:
+                    return "fail";
+                case LogLevel.Critical:
+                    return "crit";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(logLevel));
+            }
+        }
 
-		private static string GetLogLevelString(LogLevel logLevel)
-		{
-			switch (logLevel)
-			{
-				case LogLevel.Trace:
-					return "trce";
-				case LogLevel.Debug:
-					return "dbug";
-				case LogLevel.Information:
-					return "info";
-				case LogLevel.Warning:
-					return "warn";
-				case LogLevel.Error:
-					return "fail";
-				case LogLevel.Critical:
-					return "crit";
-				default:
-					throw new ArgumentOutOfRangeException(nameof(logLevel));
-			}
-		}
+        private class NoOpDisposable : IDisposable
+        {
+            public static NoOpDisposable Instance = new();
 
-		private class NoOpDisposable : IDisposable
-		{
-			public static NoOpDisposable Instance = new();
+            public void Dispose() { }
+        }
 
-			public void Dispose() { }
-		}
-	}
+        private static partial class NativeMethods
+        {
+            private static void Invoke(string method, string message)
+                => WebAssemblyRuntime.InvokeJS($"{method}(\"{WebAssemblyRuntime.EscapeJs(message)}\")");
+
+#if NET7_0_OR_GREATER
+            [JSImport("globalThis.console.debug")]
+#endif
+            public static partial void LogDebug(string message);
+
+#if !NET7_0_OR_GREATER
+            public static partial void LogDebug(string message)
+                => Invoke("console.debug", message);
+#endif
+
+#if NET7_0_OR_GREATER
+            [JSImport("globalThis.console.info")]
+#endif
+            public static partial void LogInfo(string message);
+
+#if !NET7_0_OR_GREATER
+            public static partial void LogInfo(string message)
+                => Invoke("console.info", message);
+#endif
+
+#if NET7_0_OR_GREATER
+            [JSImport("globalThis.console.warn")]
+#endif
+            public static partial void LogWarning(string message);
+
+#if !NET7_0_OR_GREATER
+            public static partial void LogWarning(string message)
+                => Invoke("console.warn", message);
+#endif
+
+#if NET7_0_OR_GREATER
+            [JSImport("globalThis.console.error")]
+#endif
+            public static partial void LogError(string message);
+
+#if !NET7_0_OR_GREATER
+            public static partial void LogError(string message)
+                => Invoke("console.error", message);
+#endif
+        }
+    }
 }

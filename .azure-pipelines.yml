@@ -1,6 +1,3 @@
-pool:
-  vmImage: 'windows-2022'
-
 trigger:
   branches:
     include:
@@ -16,15 +13,37 @@ pr:
       - release/stable/*
 
 variables:
-  # net6 preview install related
-  DotNetVersion: 6.0.300
-  UnoCheck.Version: '1.3.1'
-  DotNet.Cli.Telemetry.OptOut: true
-  UnoCheck.Manifest: https://raw.githubusercontent.com/unoplatform/uno.check/8c7f669060a6cca50f71bb0845281c424ad7eb0d/manifests/uno.ui-preview.manifest.json
+    DotNet.Cli.Telemetry.OptOut: true
 
-steps:
+jobs:
+- job: Packages
+
+  pool:
+    vmImage: 'windows-2022'
+
+  workspace:
+    clean: all
+      
+  variables:
+    NUGET_PACKAGES: $(build.sourcesdirectory)/.nuget
+
+  strategy:
+    matrix:
+      OSLog:
+        ProjectToBuild: '$(build.sourcesdirectory)/src/Uno.Extensions.Logging.OSLog/Uno.Extensions.Logging.OSLog.csproj'
+        DotNetVersion: 6.0.300
+        UnoCheck.Version: '1.3.1'
+        UnoCheck.Manifest: https://raw.githubusercontent.com/unoplatform/uno.check/8c7f669060a6cca50f71bb0845281c424ad7eb0d/manifests/uno.ui-preview.manifest.json
+
+      WebAssembly:
+        ProjectToBuild: '$(build.sourcesdirectory)/src/Uno.Extensions.Logging.WebAssembly.Console/Uno.Extensions.Logging.WebAssembly.Console.csproj'
+        DotNetVersion: 7.0.102
+        UnoCheck.Version: '1.11.0-dev.2'
+        UnoCheck.Manifest: https://raw.githubusercontent.com/unoplatform/uno.check/146b0b4b23d866bef455494a12ad7ffd2f6f2d20/manifests/uno.ui.manifest.json
+
+  steps:
   - checkout: self
-    clean: "true"
+    clean: true
 
   - task: gitversion/setup@0
     inputs:
@@ -43,20 +62,26 @@ steps:
       Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile dotnet-install.ps1
       & .\dotnet-install.ps1 -Version $(DotNetVersion) -InstallDir "$env:ProgramFiles\dotnet\" -Verbose
       & dotnet --list-sdks
-    displayName: install .NET $(DotNetVersion)
+    displayName: Install .NET $(DotNetVersion)
     errorActionPreference: stop
 
   - powershell: |
       & dotnet tool update --global uno.check --version $(UnoCheck.Version) --add-source https://api.nuget.org/v3/index.json
       & uno-check --ci --non-interactive --fix --skip androidsdk --skip androidemulator --skip xcode --skip vswin --skip vsmac --manifest $(UnoCheck.Manifest)
-    displayName: Install .NET 6 Workloads
+    displayName: Install .NET Workloads
     errorActionPreference: continue
     ignoreLASTEXITCODE: true
+
+  - powershell: |
+      rm src/global.json
+      mv src/global.net6.json src/global.json
+    displayName: Replace global.json
+    condition: eq(variables['DotNetVersion'], '6.0.300')
 
   - task: MSBuild@1
     displayName: Build Package
     inputs:
-      solution: $(build.sourcesdirectory)/src/Uno.Extensions.Logging.sln
+      solution: $(ProjectToBuild)
       msbuildLocationMethod: version
       msbuildVersion: latest
       msbuildArchitecture: x86

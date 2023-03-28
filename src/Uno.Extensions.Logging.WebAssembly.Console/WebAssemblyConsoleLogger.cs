@@ -8,9 +8,13 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Uno.Foundation;
 
+#if NET7_0_OR_GREATER
+using System.Runtime.InteropServices.JavaScript;
+#endif
+
 namespace Uno.Extensions.Logging.WebAssembly
 {
-	internal class WebAssemblyConsoleLogger : ILogger<object>, ILogger
+	internal partial class WebAssemblyConsoleLogger : ILogger<object>, ILogger
 	{
 		private static readonly string _loglevelPadding = ": ";
 		private static readonly string _messagePadding;
@@ -75,28 +79,26 @@ namespace Uno.Extensions.Logging.WebAssembly
 					CreateDefaultLogMessage(_logBuilder, logLevel, logName, eventId, message, exception);
 					var formattedMessage = _logBuilder.ToString();
 
-					void Invoke(string method, string message) => WebAssemblyRuntime.InvokeJS($"{method}(\"{WebAssemblyRuntime.EscapeJs(message)}\")");
-
 					switch (logLevel)
 					{
 						case LogLevel.Trace:
 						case LogLevel.Debug:
-							// Although https://console.spec.whatwg.org/#loglevel-severity claims that
-							// "console.debug" and "console.log" are synonyms, that doesn't match the
-							// behavior of browsers in the real world. Chromium only displays "debug"
-							// messages if you enable "Verbose" in the filter dropdown (which is off
-							// by default). As such "console.debug" is the best choice for messages
-							// with a lower severity level than "Information".
-							Invoke("console.debug", formattedMessage);
+                            // Although https://console.spec.whatwg.org/#loglevel-severity claims that
+                            // "console.debug" and "console.log" are synonyms, that doesn't match the
+                            // behavior of browsers in the real world. Chromium only displays "debug"
+                            // messages if you enable "Verbose" in the filter dropdown (which is off
+                            // by default). As such "console.debug" is the best choice for messages
+                            // with a lower severity level than "Information".
+                            NativeMethods.LogDebug(formattedMessage);
 							break;
 						case LogLevel.Information:
-							Invoke("console.info", formattedMessage);
+                            NativeMethods.LogInfo(formattedMessage);
 							break;
 						case LogLevel.Warning:
-							Invoke("console.warn", formattedMessage);
+                            NativeMethods.LogWarning(formattedMessage);
 							break;
 						case LogLevel.Error:
-							Invoke("console.error", formattedMessage);
+                            NativeMethods.LogError(formattedMessage);
 							break;
 						case LogLevel.Critical:
 							// Writing to Console.Error is even more severe than calling console.error,
@@ -177,5 +179,51 @@ namespace Uno.Extensions.Logging.WebAssembly
 
 			public void Dispose() { }
 		}
+
+		private static partial class NativeMethods
+		{
+            private static void Invoke(string method, string message) 
+				=> WebAssemblyRuntime.InvokeJS($"{method}(\"{WebAssemblyRuntime.EscapeJs(message)}\")");
+
+#if NET7_0_OR_GREATER
+			[JSImport("globalThis.console.debug")]
+#endif
+			public static partial void LogDebug(string message);
+
+#if !NET7_0_OR_GREATER
+            public static partial void LogDebug(string message) 
+				=> Invoke("console.debug", message);
+#endif
+
+#if NET7_0_OR_GREATER
+            [JSImport("globalThis.console.info")]
+#endif
+            public static partial void LogInfo(string message);
+
+#if !NET7_0_OR_GREATER
+            public static partial void LogInfo(string message)
+                => Invoke("console.info", message);
+#endif
+
+#if NET7_0_OR_GREATER
+            [JSImport("globalThis.console.warn")]
+#endif
+            public static partial void LogWarning(string message);
+
+#if !NET7_0_OR_GREATER
+            public static partial void LogWarning(string message)
+                => Invoke("console.warn", message);
+#endif
+
+#if NET7_0_OR_GREATER
+            [JSImport("globalThis.console.error")]
+#endif
+            public static partial void LogError(string message);
+
+#if !NET7_0_OR_GREATER
+            public static partial void LogError(string message)
+                => Invoke("console.error", message);
+#endif
+        }
 	}
 }

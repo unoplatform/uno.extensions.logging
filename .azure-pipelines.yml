@@ -19,7 +19,7 @@ jobs:
 - job: Packages
 
   pool:
-    vmImage: 'windows-2019'
+    vmImage: 'windows-2022'
 
   workspace:
     clean: all
@@ -75,7 +75,7 @@ jobs:
   - powershell: |
       rm src/global.json
       mv src/global.net6.json src/global.json
-    displayName: Install .NET Workloads
+    displayName: Replace global.json
     condition: eq(variables['DotNetVersion'], '6.0.300')
 
   - task: MSBuild@1

@@ -19,7 +19,7 @@ jobs:
 - job: Packages
 
   pool:
-    vmImage: 'windows-2022'
+    vmImage: 'windows-2019'
 
   workspace:
     clean: all
@@ -62,15 +62,21 @@ jobs:
       Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile dotnet-install.ps1
       & .\dotnet-install.ps1 -Version $(DotNetVersion) -InstallDir "$env:ProgramFiles\dotnet\" -Verbose
       & dotnet --list-sdks
-    displayName: install .NET $(DotNetVersion)
+    displayName: Install .NET $(DotNetVersion)
     errorActionPreference: stop
 
   - powershell: |
       & dotnet tool update --global uno.check --version $(UnoCheck.Version) --add-source https://api.nuget.org/v3/index.json
       & uno-check --ci --non-interactive --fix --skip androidsdk --skip androidemulator --skip xcode --skip vswin --skip vsmac --manifest $(UnoCheck.Manifest)
-    displayName: Install .NET 6 Workloads
+    displayName: Install .NET Workloads
     errorActionPreference: continue
     ignoreLASTEXITCODE: true
+
+  - powershell: |
+      rm src/global.json
+      mv src/global.net6.json src/global.json
+    displayName: Install .NET Workloads
+    condition: eq(variables['DotNetVersion'], '6.0.300')
 
   - task: MSBuild@1
     displayName: Build Package

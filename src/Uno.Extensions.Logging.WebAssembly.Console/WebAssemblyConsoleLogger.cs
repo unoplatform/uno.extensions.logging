@@ -6,10 +6,11 @@ using System;
 using System.Collections.Concurrent;
 using System.Text;
 using Microsoft.Extensions.Logging;
-using Uno.Foundation;
 
 #if NET7_0_OR_GREATER
 using System.Runtime.InteropServices.JavaScript;
+#else
+using Uno.Foundation;
 #endif
 
 namespace Uno.Extensions.Logging.WebAssembly
@@ -182,8 +183,10 @@ namespace Uno.Extensions.Logging.WebAssembly
 
         private static partial class NativeMethods
         {
+#if !NET7_0_OR_GREATER
             private static void Invoke(string method, string message)
                 => WebAssemblyRuntime.InvokeJS($"{method}(\"{WebAssemblyRuntime.EscapeJs(message)}\")");
+#endif
 
 #if NET7_0_OR_GREATER
             [JSImport("globalThis.console.debug")]

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="MSBuild.Sdk.Extras">
 
   	<PropertyGroup>
-    	<TargetFrameworks>xamarin.ios10;net6.0-ios;net6.0-maccatalyst</TargetFrameworks>
+    	<TargetFrameworks>xamarin.ios10;net6.0-ios;net6.0-maccatalyst;net6.0-tvos</TargetFrameworks>
 		<LangVersion>9.0</LangVersion>
 		<Nullable>enable</Nullable>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -11,9 +11,11 @@
 
     	<SupportedOSPlatformVersion Condition="'$(TargetFramework)'=='net6.0-ios'">10.0</SupportedOSPlatformVersion>
     	<SupportedOSPlatformVersion Condition="'$(TargetFramework)'=='net6.0-maccatalyst'">13.1</SupportedOSPlatformVersion>
+    	<SupportedOSPlatformVersion Condition="'$(TargetFramework)'=='net6.0-tvos'">10.0</SupportedOSPlatformVersion>
 
 		<TargetPlatformVersion Condition="'$(TargetFramework)'=='net6.0-ios'">10.0</TargetPlatformVersion>
 		<TargetPlatformVersion Condition="'$(TargetFramework)'=='net6.0-maccatalyst'">13.1</TargetPlatformVersion>
+		<TargetPlatformVersion Condition="'$(TargetFramework)'=='net6.0-tvos'">10.0</TargetPlatformVersion>
 	</PropertyGroup>
 
 	<ItemGroup>

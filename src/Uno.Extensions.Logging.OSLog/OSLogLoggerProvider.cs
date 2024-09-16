@@ -8,14 +8,14 @@ using Microsoft.Extensions.Logging;
 namespace Uno.Extensions.Logging
 {
 	/// <summary>
-	/// A provider of <see cref="WebAssemblyConsoleLogger{T}"/> instances.
+	/// A provider of <see cref="OSLogLogger" /> instances.
 	/// </summary>
 	public class OSLogLoggerProvider : ILoggerProvider
 	{
 		private readonly ConcurrentDictionary<string, OSLogLogger> _loggers;
 
 		/// <summary>
-		/// Creates an instance of <see cref="WebAssemblyConsoleLoggerProvider"/>.
+		/// Creates an instance of <see cref="OSLogLoggerProvider"/>.
 		/// </summary>
 		public OSLogLoggerProvider()
 		{

@@ -7,11 +7,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using Microsoft.Extensions.Logging;
 
-#if NET7_0_OR_GREATER
 using System.Runtime.InteropServices.JavaScript;
-#else
-using Uno.Foundation;
-#endif
 
 namespace Uno.Extensions.Logging.WebAssembly
 {
@@ -183,50 +179,19 @@ namespace Uno.Extensions.Logging.WebAssembly
 
         private static partial class NativeMethods
         {
-#if !NET7_0_OR_GREATER
-            private static void Invoke(string method, string message)
-                => WebAssemblyRuntime.InvokeJS($"{method}(\"{WebAssemblyRuntime.EscapeJs(message)}\")");
-#endif
 
-#if NET7_0_OR_GREATER
             [JSImport("globalThis.console.debug")]
-#endif
             public static partial void LogDebug(string message);
 
-#if !NET7_0_OR_GREATER
-            public static partial void LogDebug(string message)
-                => Invoke("console.debug", message);
-#endif
-
-#if NET7_0_OR_GREATER
             [JSImport("globalThis.console.info")]
-#endif
             public static partial void LogInfo(string message);
 
-#if !NET7_0_OR_GREATER
-            public static partial void LogInfo(string message)
-                => Invoke("console.info", message);
-#endif
-
-#if NET7_0_OR_GREATER
             [JSImport("globalThis.console.warn")]
-#endif
             public static partial void LogWarning(string message);
 
-#if !NET7_0_OR_GREATER
-            public static partial void LogWarning(string message)
-                => Invoke("console.warn", message);
-#endif
-
-#if NET7_0_OR_GREATER
             [JSImport("globalThis.console.error")]
-#endif
             public static partial void LogError(string message);
 
-#if !NET7_0_OR_GREATER
-            public static partial void LogError(string message)
-                => Invoke("console.error", message);
-#endif
         }
     }
 }

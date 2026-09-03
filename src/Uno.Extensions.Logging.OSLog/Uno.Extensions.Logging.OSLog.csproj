@@ -1,21 +1,16 @@
-﻿<Project Sdk="MSBuild.Sdk.Extras">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  	<PropertyGroup>
-    	<TargetFrameworks>xamarin.ios10;net6.0-ios;net6.0-maccatalyst;net6.0-tvos</TargetFrameworks>
-		<LangVersion>9.0</LangVersion>
+	<PropertyGroup>
+		<TargetFrameworks>net10.0-ios;net10.0-tvos</TargetFrameworks>
 		<Nullable>enable</Nullable>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<NoNFloatUsing>true</NoNFloatUsing>
-		
+
 		<NoWarn>$(NoWarn);NU5128</NoWarn>
 
-    	<SupportedOSPlatformVersion Condition="'$(TargetFramework)'=='net6.0-ios'">10.0</SupportedOSPlatformVersion>
-    	<SupportedOSPlatformVersion Condition="'$(TargetFramework)'=='net6.0-maccatalyst'">13.1</SupportedOSPlatformVersion>
-    	<SupportedOSPlatformVersion Condition="'$(TargetFramework)'=='net6.0-tvos'">10.0</SupportedOSPlatformVersion>
-
-		<TargetPlatformVersion Condition="'$(TargetFramework)'=='net6.0-ios'">10.0</TargetPlatformVersion>
-		<TargetPlatformVersion Condition="'$(TargetFramework)'=='net6.0-maccatalyst'">13.1</TargetPlatformVersion>
-		<TargetPlatformVersion Condition="'$(TargetFramework)'=='net6.0-tvos'">10.0</TargetPlatformVersion>
+		<!-- Matches the Uno Platform 7.0 floor (Uno.Common.iOS.targets). -->
+		<SupportedOSPlatformVersion Condition="'$(TargetFramework)'=='net10.0-ios'">14.2</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="'$(TargetFramework)'=='net10.0-tvos'">14.2</SupportedOSPlatformVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -23,7 +18,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="..\..\build\_._" PackagePath="lib\net6.0-macos10.14" Pack="true" Visible="False" />
-		<Content Include="..\..\build\_._" PackagePath="lib\net6.0-android31.0" Pack="true" Visible="False" />
+		<Content Include="..\..\build\_._" PackagePath="lib\net10.0-macos15.0" Pack="true" Visible="False" />
+		<Content Include="..\..\build\_._" PackagePath="lib\net10.0-android21.0" Pack="true" Visible="False" />
 	</ItemGroup>
 </Project>
